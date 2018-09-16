@@ -20,6 +20,11 @@ class Signin extends React.Component {
 		this.setState({signInPasword: event.target.value})
 	}
 
+	saveAuthTokenInSession=(token)=>{
+		window.sessionStorage.setItem('token',token);
+		// window.localStorage.setItem('token',token);
+	}
+
 	onSubmitSignIn=()=>{
 		fetch('http://localhost:3000/signin',{
 			method: 'post',
@@ -30,15 +35,31 @@ class Signin extends React.Component {
 			})
 		}).then(respon=>{
 			return respon.json()
-		}).then(user=>{
+		}).then(data=>{
 			// console.log(data)
-			if (user.id){
-				this.props.loadUser(user);
-				this.props.onRouteChange('Home')
+			if (data.userId && data.success=== true){
+				this.saveAuthTokenInSession(data.token);
+				fetch(`http://localhost:3000/profile/${data.userId}`,{
+						method: 'GET',
+						headers: {
+								'Content-Type': 'application/json',
+								'authorization': data.token
+						},
+						})
+						.then(resp=>resp.json())
+						.then(user=>{
+								if (user && user.email){
+										this.props.loadUser(user);
+										this.props.onRouteChange('Home')
+								}
+						})
+						.catch(console.log)
+				// this.props.loadUser(data);
+				// this.props.onRouteChange('Home')
 			}else{
 				// console.log('Email or Passward Incorrect')
 			}
-		})
+		}).catch(console.log)
 		
 	}
 
